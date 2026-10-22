@@ -166,7 +166,9 @@ async function callMta(functionName, args = []) {
       return { error: `HTTP ${res.status}: ${res.statusText}`, statusCode: res.status };
     }
 
-    const data = await res.json();
+    const raw = await res.json();
+    // MTA wraps return values in an outer array: [ returnValue ]
+    const data = (Array.isArray(raw) && raw.length === 1) ? raw[0] : raw;
     return { data, isMock: false };
   } catch (err) {
     return { error: err.message };
@@ -176,8 +178,14 @@ async function callMta(functionName, args = []) {
 // Fetch Online Players
 export async function fetchOnlinePlayers() {
   const result = await callMta('getOnlinePlayers');
-  if (!result.error && Array.isArray(result.data)) {
-    return { players: result.data, isMock: false };
+  if (!result.error) {
+    let list = result.data;
+    if (Array.isArray(list) && Array.isArray(list[0])) {
+      list = list[0];
+    }
+    if (Array.isArray(list)) {
+      return { players: list, isMock: false };
+    }
   }
 
   // If admin-api is not yet started, check ASE query
@@ -186,18 +194,24 @@ export async function fetchOnlinePlayers() {
     players: [], 
     isMock: false, 
     serverOnline: !!ase,
-    notice: result.error ? 'MTA admin-api bridge not started. Run "refresh" and "start admin-api" in MTA server console.' : null 
+    notice: result.error ? 'MTA admin-api bridge error: ' + result.error : null 
   };
 }
 
 // Fetch Resources List
 export async function fetchResources() {
   const result = await callMta('getResourcesList');
-  if (!result.error && Array.isArray(result.data)) {
-    return { resources: result.data, isMock: false };
+  if (!result.error) {
+    let list = result.data;
+    if (Array.isArray(list) && Array.isArray(list[0])) {
+      list = list[0];
+    }
+    if (Array.isArray(list)) {
+      return { resources: list, isMock: false };
+    }
   }
 
-  // Return all 146 real resources from the filesystem
+  // Fallback to real resources scanned from filesystem
   if (cachedResources.length === 0) {
     cachedResources = scanRealResources();
   }
@@ -222,7 +236,8 @@ export async function executeResourceAction(name, action) {
 
   const result = await callMta(funcMap[action], [name]);
   if (!result.error && result.data) {
-    return { ...result.data, isMock: false };
+    const resData = Array.isArray(result.data) ? result.data[0] : result.data;
+    return { ...resData, isMock: false };
   }
 
   // Update in local cached list
@@ -248,7 +263,8 @@ export async function executeResourceAction(name, action) {
 export async function kickPlayer(id, reason) {
   const result = await callMta('kickServerPlayer', [id, reason]);
   if (!result.error && result.data) {
-    return { ...result.data, isMock: false };
+    const kickData = Array.isArray(result.data) ? result.data[0] : result.data;
+    return { ...kickData, isMock: false };
   }
 
   return { 
@@ -261,8 +277,10 @@ export async function kickPlayer(id, reason) {
 export async function fetchServerOverview() {
   const result = await callMta('getServerOverview');
   if (!result.error && result.data) {
-    return { ...result.data, isMock: false };
+    const overview = Array.isArray(result.data) ? result.data[0] : result.data;
+    return { ...overview, isMock: false };
   }
+
 
   // Query real MTA server via ASE UDP!
   const ase = await queryMtaAse();

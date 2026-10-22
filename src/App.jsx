@@ -181,23 +181,33 @@ export default function App() {
     }
   };
 
-  // Filtering calculations
-  const filteredPlayers = players.filter(p => 
-    p.character_name.toLowerCase().includes(playerSearch.toLowerCase()) ||
-    p.account_name.toLowerCase().includes(playerSearch.toLowerCase())
-  );
+  // Safe filtering calculations
+  const safePlayers = Array.isArray(players) ? players : [];
+  const safeResources = Array.isArray(resources) ? resources : [];
 
-  const filteredResources = resources.filter(r => {
-    const matchesSearch = r.name.toLowerCase().includes(resourceSearch.toLowerCase()) ||
-      (r.description && r.description.toLowerCase().includes(resourceSearch.toLowerCase()));
+  const filteredPlayers = safePlayers.filter(p => {
+    if (!p || typeof p !== 'object') return false;
+    const charName = String(p.character_name || '');
+    const accName = String(p.account_name || '');
+    const q = playerSearch.toLowerCase();
+    return charName.toLowerCase().includes(q) || accName.toLowerCase().includes(q);
+  });
+
+  const filteredResources = safeResources.filter(r => {
+    if (!r || typeof r !== 'object') return false;
+    const name = String(r.name || '');
+    const desc = String(r.description || '');
+    const q = resourceSearch.toLowerCase();
+    const matchesSearch = name.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
     if (!matchesSearch) return false;
     if (resourceFilter === 'running') return r.state === 'running';
     if (resourceFilter === 'stopped') return r.state !== 'running';
     return true;
   });
 
-  const runningCount = resources.filter(r => r.state === 'running').length;
-  const stoppedCount = resources.length - runningCount;
+  const runningCount = safeResources.filter(r => r?.state === 'running').length;
+  const stoppedCount = safeResources.length - runningCount;
+
 
   return (
     <div className="app-container">
