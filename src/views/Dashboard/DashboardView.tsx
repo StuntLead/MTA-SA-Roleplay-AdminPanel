@@ -1,5 +1,5 @@
 import React from 'react';
-import { Server, Activity, Users, Layers, ShieldCheck, Database, HardDrive, Clock, RefreshCw } from 'lucide-react';
+import { Server, Users, Layers, Database } from 'lucide-react';
 import { IServerOverview } from '../../interfaces';
 
 interface DashboardViewProps {
@@ -16,10 +16,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   loading,
 }) => {
   return (
-    <div className="hibank-page-card">
+    <div className="admin-page-card">
       <h1 className="page-card-title">Server Dashboard &amp; Telemetry</h1>
 
-      {/* KPI Cards Row */}
       <div className="dashboard-kpi-grid">
         <div className="dashboard-kpi-card">
           <div className="kpi-header">
@@ -70,7 +69,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Server Specs Details */}
       <div style={{ marginTop: '1.5rem', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '1.25rem' }}>
         <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
           System Telemetry &amp; Server Specifications

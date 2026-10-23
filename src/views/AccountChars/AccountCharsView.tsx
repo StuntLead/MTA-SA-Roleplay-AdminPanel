@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Eye, Search, Download, RefreshCw, Calendar } from 'lucide-react';
+import { UserCheck, Eye, Search, Download, RefreshCw } from 'lucide-react';
 import { IAccount } from '../../interfaces';
 import { AccountDetailsModal } from './components/AccountDetailsModal';
 
@@ -65,10 +65,10 @@ export const AccountCharsView: React.FC<AccountCharsViewProps> = ({
   };
 
   return (
-    <div className="hibank-page-card">
+    <div className="admin-page-card">
       <h1 className="page-card-title">Accounts &amp; Characters Management</h1>
 
-      <div className="hibank-toolbar">
+      <div className="admin-toolbar">
         <div className="toolbar-left">
           <div>
             <div className="filter-box-label">Quick Account Search</div>
@@ -106,8 +106,8 @@ export const AccountCharsView: React.FC<AccountCharsViewProps> = ({
         </div>
       </div>
 
-      <div className="hibank-table-wrapper">
-        <table className="hibank-table">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
           <thead>
             <tr>
               <th style={{ width: '50px' }}>NO</th>
@@ -202,7 +202,7 @@ export const AccountCharsView: React.FC<AccountCharsViewProps> = ({
         </table>
       </div>
 
-      <div className="hibank-pagination-bar">
+      <div className="admin-pagination-bar">
         <div>
           <span>Rows per page:</span>
           <select className="rows-per-page-select" defaultValue="15">

@@ -6,20 +6,17 @@ import { DashboardView } from './views/Dashboard/DashboardView';
 import { OnlinePlayerView } from './views/OnlinePlayer/OnlinePlayerView';
 import { AccountCharsView } from './views/AccountChars/AccountCharsView';
 import { ResourceControlsView } from './views/ResourceControls/ResourceControlsView';
+import { GameLogView } from './views/GameLog/GameLogView';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
 let toastIdCounter = 0;
 
-/**
- * AdminPanel — connects backend APIs and renders views with URL-based routing
- */
 function AdminPanel() {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
 
-  // Live Data State
   const [overview, setOverview]       = useState(null);
   const [players, setPlayers]         = useState([]);
   const [resources, setResources]     = useState([]);
@@ -27,14 +24,12 @@ function AdminPanel() {
     accounts: [], total: 0, page: 1, totalPages: 1,
   });
 
-  /* ── Toasts ──────────────────────────────────────────────── */
   const showToast = useCallback((message, type = 'success') => {
     const id = ++toastIdCounter;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  /* ── Fetch core data from backend ────────────────────────── */
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -62,7 +57,6 @@ function AdminPanel() {
     return () => clearInterval(id);
   }, [fetchData]);
 
-  /* ── Account search ──────────────────────────────────────── */
   const handleAccountSearch = async (query) => {
     try {
       const res = await fetch(`/api/accounts?search=${encodeURIComponent(query)}&page=1&limit=20`);
@@ -70,14 +64,12 @@ function AdminPanel() {
     } catch (err) { console.error(err); }
   };
 
-  /* ── View account details ────────────────────────────────── */
   const handleViewAccount = async (id) => {
     const res = await fetch(`/api/accounts/${id}`);
     if (!res.ok) throw new Error('Failed to load account');
     return res.json();
   };
 
-  /* ── Resource actions (start / stop / restart) ───────────── */
   const handleResourceAction = async (name, action) => {
     try {
       const res = await fetch('/api/resources/action', {
@@ -101,7 +93,6 @@ function AdminPanel() {
     }
   };
 
-  /* ── Kick player ─────────────────────────────────────────── */
   const handleKickPlayer = async (id, reason) => {
     const res = await fetch('/api/players/kick', {
       method: 'POST',
@@ -141,6 +132,7 @@ function AdminPanel() {
                     'online-players': '/players',
                     'account-chars': '/accounts',
                     'resource-controls': '/resources',
+                    'game-logs': '/logs',
                     'dashboard': '/dashboard',
                   };
                   navigate(pathMap[routeId] || `/${routeId}`);
@@ -185,12 +177,12 @@ function AdminPanel() {
               />
             }
           />
+          <Route path="/logs" element={<GameLogView />} />
           <Route path="/resource-controls" element={<Navigate to="/resources" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </MainLayout>
 
-      {/* Toasts */}
       {toasts.length > 0 && (
         <div className="toast-container">
           {toasts.map((toast) => (
@@ -208,7 +200,6 @@ function AdminPanel() {
   );
 }
 
-/** Wrap with ThemeProvider */
 export default function App() {
   return (
     <ThemeProvider>

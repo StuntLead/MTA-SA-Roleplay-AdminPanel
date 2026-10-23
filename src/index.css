@@ -1,23 +1,15 @@
-/* ============================================================
-   OwlGaming MTA:SA Admin Portal — Enterprise Banking Design System
-   Inspired by Hibank Biller Switching backoffice interface
-   ============================================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ─── Light Mode Variables (Default Hibank Theme) ─────────── */
 :root {
-  /* Hibank Brand Signature Colors */
-  --hibank-teal:        #005b64;
-  --hibank-teal-hover:  #004a52;
-  --hibank-teal-light:  #e6f4f5;
-  --hibank-teal-pill:   #00636b;
-  --hibank-rust:        #9e4a24;
-  --hibank-rust-hover:  #873e1c;
-  --hibank-crimson:     #a83232;
-  --hibank-crimson-hov: #8e2828;
+  --panel-teal:         #005b64;
+  --panel-teal-hover:   #004a52;
+  --panel-teal-light:   #e6f4f5;
+  --panel-teal-pill:    #00636b;
+  --panel-rust:         #9e4a24;
+  --panel-rust-hover:   #873e1c;
+  --panel-crimson:      #a83232;
+  --panel-crimson-hov:  #8e2828;
 
-  /* Backgrounds */
   --bg-app:             #f4f6f8;
   --bg-sidebar:         #ffffff;
   --bg-card:            #ffffff;
@@ -26,18 +18,15 @@
   --bg-hover:           #f8fafc;
   --bg-table-stripe:    #fafbfd;
 
-  /* Borders */
   --border:             #e2e8f0;
   --border-input:       #d1d5db;
   --border-focus:       #00636b;
 
-  /* Text Colors */
   --text-primary:       #1e293b;
   --text-secondary:     #475569;
   --text-muted:         #94a3b8;
   --text-dim:           #cbd5e1;
 
-  /* Status Colors */
   --success:            #10b981;
   --success-bg:         #ecfdf5;
   --warning:            #f59e0b;
@@ -47,11 +36,9 @@
   --info:               #0ea5e9;
   --info-bg:            #f0f9ff;
 
-  /* Typography & Sizing */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
 
-  /* Layout dimensions */
   --header-height:      54px;
   --sidebar-width:      260px;
   --r-sm:               4px;
@@ -63,12 +50,11 @@
   --shadow-lg:          0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-/* ─── Dark Mode Override ──────────────────────────────────── */
 :root.dark {
-  --hibank-teal:        #00474e;
-  --hibank-teal-hover:  #00383e;
-  --hibank-teal-light:  rgba(0, 99, 107, 0.22);
-  --hibank-teal-pill:   #00636b;
+  --panel-teal:         #00474e;
+  --panel-teal-hover:   #00383e;
+  --panel-teal-light:   rgba(0, 99, 107, 0.22);
+  --panel-teal-pill:    #00636b;
 
   --bg-app:             #0b0f19;
   --bg-sidebar:         #111827;
@@ -93,7 +79,6 @@
   --info-bg:            rgba(14, 165, 233, 0.15);
 }
 
-/* ─── Global Reset & Base ─────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -109,18 +94,16 @@ body {
   line-height: 1.5;
 }
 
-/* ─── App Shell Structure ─────────────────────────────────── */
-.hibank-app {
+.admin-app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   width: 100%;
 }
 
-/* ─── Top Header Navigation Bar ──────────────────────────── */
-.hibank-header {
+.admin-header {
   height: var(--header-height);
-  background-color: var(--hibank-teal);
+  background-color: var(--panel-teal);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -132,13 +115,13 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-.hibank-header-left {
+.admin-header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.hibank-menu-btn {
+.admin-menu-btn {
   background: transparent;
   border: none;
   color: #ffffff;
@@ -151,11 +134,11 @@ body {
   transition: opacity 0.2s;
 }
 
-.hibank-menu-btn:hover {
+.admin-menu-btn:hover {
   opacity: 0.85;
 }
 
-.hibank-header-title {
+.admin-header-title {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -163,7 +146,7 @@ body {
   white-space: nowrap;
 }
 
-.hibank-header-right {
+.admin-header-right {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -195,7 +178,7 @@ body {
   background-color: #f87171;
 }
 
-.hibank-icon-btn {
+.admin-icon-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #ffffff;
@@ -209,61 +192,17 @@ body {
   transition: background 0.15s;
 }
 
-.hibank-icon-btn:hover {
+.admin-icon-btn:hover {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* User Profile on the Top Right */
-.hibank-user-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-left: 0.5rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.user-profile-details {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-}
-
-.user-profile-name {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.user-profile-email {
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.2;
-}
-
-.user-profile-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  background-color: #004d53;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-/* ─── App Body Layout ─────────────────────────────────────── */
-.hibank-body {
+.admin-body {
   display: flex;
   flex: 1;
   min-height: calc(100vh - var(--header-height));
 }
 
-/* ─── Left Sidebar Navigation ─────────────────────────────── */
-.hibank-sidebar {
+.admin-sidebar {
   width: var(--sidebar-width);
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border);
@@ -273,11 +212,10 @@ body {
   flex-shrink: 0;
 }
 
-.hibank-sidebar.collapsed {
+.admin-sidebar.collapsed {
   display: none;
 }
 
-/* Brand Box in Sidebar Header */
 .sidebar-brand-box {
   padding: 1.25rem 1.15rem;
   border-bottom: 1px solid var(--border);
@@ -286,13 +224,13 @@ body {
   gap: 0.85rem;
 }
 
-.hibank-brand-dots {
+.admin-brand-dots {
   display: grid;
   grid-template-columns: repeat(2, 6px);
   gap: 4px;
 }
 
-.hibank-brand-dots .dot {
+.admin-brand-dots .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -305,7 +243,7 @@ body {
 .dot-blue   { background-color: #3b82f6; }
 .dot-purple { background-color: #8b5cf6; }
 
-.hibank-brand-text {
+.admin-brand-text {
   display: flex;
   flex-direction: column;
 }
@@ -318,85 +256,13 @@ body {
   letter-spacing: -0.3px;
 }
 
-.brand-sub {
-  font-size: 8.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.6px;
-  margin-top: 2px;
-}
-
-/* Nav Tree Groups */
-.hibank-nav-tree {
+.admin-nav-tree {
   flex: 1;
   padding: 0.75rem 0.5rem;
   overflow-y: auto;
 }
 
-.nav-tree-group {
-  margin-bottom: 0.25rem;
-}
-
-.nav-group-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.55rem 0.75rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--r-md);
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s, color 0.15s;
-}
-
-.nav-group-header:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.nav-group-header.active-parent {
-  background-color: var(--hibank-teal-light);
-  color: var(--hibank-teal-pill);
-}
-
-.group-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.group-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-}
-
-.nav-group-header.active-parent .group-icon {
-  color: var(--hibank-teal-pill);
-}
-
-.group-chevron {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-}
-
-.nav-group-children {
-  padding-left: 0.5rem;
-  margin-top: 2px;
-  margin-bottom: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* Nav Items (Pill) */
-.hibank-nav-item {
+.admin-nav-item {
   width: 100%;
   display: flex;
   align-items: center;
@@ -414,62 +280,32 @@ body {
   margin-bottom: 4px;
 }
 
-.hibank-nav-item:hover {
+.admin-nav-item:hover {
   background-color: var(--bg-hover);
   color: var(--text-primary);
 }
 
-.hibank-nav-item .nav-item-left {
+.admin-nav-item .nav-item-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.hibank-nav-item .nav-item-icon {
+.admin-nav-item .nav-item-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
 }
 
-/* ACTIVE PILL — Identical to Screenshot 1 "Biller Transaction" & Screenshot 2 "Master Product" */
-.hibank-nav-item.active-pill {
-  background-color: var(--hibank-teal-pill) !important;
+.admin-nav-item.active-pill {
+  background-color: var(--panel-teal-pill) !important;
   color: #ffffff !important;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 99, 107, 0.35);
 }
 
-.hibank-nav-item.active-pill .nav-item-icon {
+.admin-nav-item.active-pill .nav-item-icon {
   color: #ffffff;
-}
-
-.nav-sub-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 0.75rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--r-md);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.nav-sub-item:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.nav-sub-item.active-pill {
-  background-color: var(--hibank-teal-pill) !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 99, 107, 0.35);
 }
 
 .sub-item-badge {
@@ -487,8 +323,7 @@ body {
   color: #ffffff;
 }
 
-/* Sidebar Footer */
-.hibank-sidebar-footer {
+.admin-sidebar-footer {
   padding: 0.85rem 1rem;
   border-top: 1px solid var(--border);
   display: flex;
@@ -518,8 +353,7 @@ body {
   background-color: #ef4444;
 }
 
-/* ─── Main Content Area ───────────────────────────────────── */
-.hibank-main-content {
+.admin-main-content {
   flex: 1;
   padding: 1.5rem 2rem;
   overflow-y: auto;
@@ -528,15 +362,14 @@ body {
   min-width: 0;
 }
 
-.hibank-card-container {
+.admin-card-container {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   flex: 1;
 }
 
-/* White Page Card (Look at Screenshots 1 & 2) */
-.hibank-page-card {
+.admin-page-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -544,7 +377,6 @@ body {
   padding: 1.75rem 2rem;
 }
 
-/* Centered Page Title (e.g. "Biller Transaction" / "Daftar Master Product") */
 .page-card-title {
   text-align: center;
   font-size: 22px;
@@ -553,8 +385,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Action Toolbar (Filter on left, Action buttons on right) */
-.hibank-toolbar {
+.admin-toolbar {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -577,7 +408,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* Filter Input Box */
 .filter-box-label {
   font-size: 12px;
   font-weight: 500;
@@ -605,7 +435,6 @@ body {
   width: 220px;
 }
 
-/* Enterprise Buttons (Exact colors from reference) */
 .btn-enterprise {
   display: inline-flex;
   align-items: center;
@@ -628,31 +457,28 @@ body {
   cursor: not-allowed;
 }
 
-/* Rust/Brown button (Download Lists in Screenshot 2) */
 .btn-rust {
-  background-color: var(--hibank-rust);
+  background-color: var(--panel-rust);
   color: #ffffff;
 }
 .btn-rust:hover {
-  background-color: var(--hibank-rust-hover);
+  background-color: var(--panel-rust-hover);
 }
 
-/* Dark Teal button (Add Product / Action in Screenshot 2) */
 .btn-teal {
-  background-color: var(--hibank-teal-pill);
+  background-color: var(--panel-teal-pill);
   color: #ffffff;
 }
 .btn-teal:hover {
-  background-color: var(--hibank-teal-hover);
+  background-color: var(--panel-teal-hover);
 }
 
-/* Crimson Red button (Delete / Kick in Screenshot 2) */
 .btn-crimson {
-  background-color: var(--hibank-crimson);
+  background-color: var(--panel-crimson);
   color: #ffffff;
 }
 .btn-crimson:hover {
-  background-color: var(--hibank-crimson-hov);
+  background-color: var(--panel-crimson-hov);
 }
 
 .btn-ghost {
@@ -665,26 +491,25 @@ body {
   color: var(--text-primary);
 }
 
-/* ─── Enterprise Banking Table (Hibank Style) ─────────────── */
-.hibank-table-wrapper {
+.admin-table-wrapper {
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
 }
 
-.hibank-table {
+.admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12.5px;
   text-align: left;
 }
 
-.hibank-table thead tr {
+.admin-table thead tr {
   background-color: var(--bg-card-header);
 }
 
-.hibank-table th {
+.admin-table th {
   padding: 0.75rem 0.65rem;
   font-size: 11px;
   font-weight: 700;
@@ -696,7 +521,6 @@ body {
   vertical-align: top;
 }
 
-/* Inline Column Search Filter Inputs (as seen in Screenshot 1!) */
 .col-filter-input {
   display: block;
   width: 100%;
@@ -716,27 +540,26 @@ body {
   border-color: var(--border-focus);
 }
 
-.hibank-table tbody tr {
+.admin-table tbody tr {
   border-bottom: 1px solid var(--border);
   transition: background 0.12s;
 }
 
-.hibank-table tbody tr:hover {
+.admin-table tbody tr:hover {
   background-color: var(--bg-hover);
 }
 
-.hibank-table tbody tr:last-child {
+.admin-table tbody tr:last-child {
   border-bottom: none;
 }
 
-.hibank-table td {
+.admin-table td {
   padding: 0.75rem 0.65rem;
   color: var(--text-primary);
   vertical-align: middle;
 }
 
-/* Pagination Bar */
-.hibank-pagination-bar {
+.admin-pagination-bar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -778,13 +601,12 @@ body {
 }
 
 .pagination-page-btn.active {
-  background-color: var(--hibank-teal-pill);
+  background-color: var(--panel-teal-pill);
   color: #ffffff;
-  border-color: var(--hibank-teal-pill);
+  border-color: var(--panel-teal-pill);
   font-weight: 600;
 }
 
-/* ─── Modal Dialog Styling (Screenshot 2 "Add Product" Style) ─── */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -860,7 +682,6 @@ body {
   border-top: 1px solid var(--border);
 }
 
-/* Enterprise Form Controls */
 .form-field {
   display: flex;
   flex-direction: column;
@@ -890,7 +711,6 @@ body {
   border-color: var(--border-focus);
 }
 
-/* Data List inside Modals */
 .data-list {
   display: flex;
   flex-direction: column;
@@ -919,15 +739,13 @@ body {
   font-weight: 500;
 }
 
-/* ─── Footer Copyright (Like Reference Image) ─────────────── */
-.hibank-page-footer {
+.admin-page-footer {
   text-align: center;
   padding: 1.5rem 0 0.5rem 0;
   font-size: 11.5px;
   color: var(--text-muted);
 }
 
-/* ─── Dashboard Specifics (KPI Grid & Tiles) ─────────────── */
 .dashboard-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -966,8 +784,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--hibank-teal-light);
-  color: var(--hibank-teal-pill);
+  background-color: var(--panel-teal-light);
+  color: var(--panel-teal-pill);
 }
 
 .kpi-number {
@@ -983,7 +801,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Badges */
 .badge-pill {
   display: inline-flex;
   align-items: center;
@@ -1000,7 +817,6 @@ body {
 .badge-info    { background: var(--info-bg);    color: var(--info); }
 .badge-neutral { background: var(--bg-hover);   color: var(--text-secondary); }
 
-/* Toasts */
 .toast-container {
   position: fixed;
   bottom: 1.5rem;

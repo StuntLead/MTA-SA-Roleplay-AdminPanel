@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, Play, Square, RotateCcw, RefreshCw, Download, CheckCircle2, XCircle } from 'lucide-react';
+import { Layers, Play, Square, RotateCcw, RefreshCw, Download } from 'lucide-react';
 import { IResource, ResourceActionType } from '../../interfaces';
 
 interface ResourceControlsViewProps {
@@ -61,10 +61,10 @@ export const ResourceControlsView: React.FC<ResourceControlsViewProps> = ({
   };
 
   return (
-    <div className="hibank-page-card">
+    <div className="admin-page-card">
       <h1 className="page-card-title">Server Resource Controls</h1>
 
-      <div className="hibank-toolbar">
+      <div className="admin-toolbar">
         <div className="toolbar-left">
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
@@ -114,8 +114,8 @@ export const ResourceControlsView: React.FC<ResourceControlsViewProps> = ({
         </div>
       </div>
 
-      <div className="hibank-table-wrapper">
-        <table className="hibank-table">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
           <thead>
             <tr>
               <th style={{ width: '50px' }}>NO</th>
@@ -237,7 +237,7 @@ export const ResourceControlsView: React.FC<ResourceControlsViewProps> = ({
         </table>
       </div>
 
-      <div className="hibank-pagination-bar">
+      <div className="admin-pagination-bar">
         <div>
           <span>Rows per page:</span>
           <select className="rows-per-page-select" defaultValue="25">

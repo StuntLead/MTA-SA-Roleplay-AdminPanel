@@ -7,7 +7,8 @@ import {
   Moon, 
   Sun, 
   Menu, 
-  LayoutDashboard
+  LayoutDashboard,
+  ScrollText
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -46,10 +47,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Current active route
   const currentPath = location.pathname === '/' ? '/dashboard' : location.pathname;
 
-  // Exact 4 navigation items requested
   const menuItems: NavMenuItem[] = [
     {
       id: 'dashboard',
@@ -78,28 +77,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       icon: <Layers size={17} />,
       badge: resourceCount,
     },
+    {
+      id: 'game-logs',
+      label: 'Game Log',
+      path: '/logs',
+      icon: <ScrollText size={17} />,
+    },
   ];
 
   return (
-    <div className="hibank-app">
-      {/* ── Top Header Navigation Bar (Hibank Deep Teal Style) ── */}
-      <header className="hibank-header">
-        <div className="hibank-header-left">
+    <div className="admin-app">
+      <header className="admin-header">
+        <div className="admin-header-left">
           <button 
             type="button" 
-            className="hibank-menu-btn" 
+            className="admin-menu-btn" 
             onClick={() => setSidebarOpen(!sidebarOpen)}
             title="Toggle Sidebar"
           >
             <Menu size={20} />
           </button>
-          <div className="hibank-header-title">
+          <div className="admin-header-title">
             <span>OwlGaming - MTA Roleplay Admin</span>
           </div>
         </div>
 
-        <div className="hibank-header-right">
-          {/* Server status pill */}
+        <div className="admin-header-right">
           <div className="header-status-badge">
             <span className={`status-indicator-dot ${isServerOnline ? 'online' : 'offline'}`} />
             <span className="status-indicator-text">{isServerOnline ? 'Server Live' : 'Server Offline'}</span>
@@ -107,7 +110,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           <button
             type="button"
-            className="hibank-icon-btn"
+            className="admin-icon-btn"
             onClick={onRefresh}
             disabled={loading}
             title="Refresh All Data"
@@ -117,33 +120,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           <button
             type="button"
-            className="hibank-icon-btn"
+            className="admin-icon-btn"
             onClick={toggleTheme}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
-
-          {/* User Profile on the right (like nando - ADMIN in reference) */}
-          <div className="hibank-user-profile">
-            <div className="user-profile-details">
-              <span className="user-profile-name">nando - ADMIN</span>
-              <span className="user-profile-email">fernando.rachman@owlgaming.mta</span>
-            </div>
-            <div className="user-profile-avatar" title="Super Administrator">
-              <span>OG</span>
-            </div>
-          </div>
         </div>
       </header>
 
-      {/* ── Main Container (Sidebar + Content) ── */}
-      <div className="hibank-body">
-        {/* ── Left Sidebar (White Navigation) ── */}
-        <aside className={`hibank-sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
-          {/* Brand Logo Header (Hibank / OwlGaming multi-dot pattern) */}
+      <div className="admin-body">
+        <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
           <div className="sidebar-brand-box">
-            <div className="hibank-brand-dots">
+            <div className="admin-brand-dots">
               <span className="dot dot-red" />
               <span className="dot dot-orange" />
               <span className="dot dot-green" />
@@ -151,25 +140,24 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <span className="dot dot-blue" />
               <span className="dot dot-purple" />
             </div>
-            <div className="hibank-brand-text">
+            <div className="admin-brand-text">
               <span className="brand-primary">OwlGaming</span>
-              <span className="brand-sub">A MEMBER OF MTA ROLEPLAY</span>
             </div>
           </div>
 
-          {/* Navigation Items (Only Dashboard, Online Players, Accounts & Characters, Resource Controls) */}
-          <nav className="hibank-nav-tree">
+          <nav className="admin-nav-tree">
             {menuItems.map((item) => {
               const isActive = currentPath === item.path || 
                 (item.path === '/players' && currentPath.startsWith('/players')) ||
                 (item.path === '/accounts' && currentPath.startsWith('/accounts')) ||
-                (item.path === '/resources' && currentPath.startsWith('/resources'));
+                (item.path === '/resources' && currentPath.startsWith('/resources')) ||
+                (item.path === '/logs' && currentPath.startsWith('/logs'));
 
               return (
                 <button
                   key={item.id}
                   type="button"
-                  className={`hibank-nav-item ${isActive ? 'active-pill' : ''}`}
+                  className={`admin-nav-item ${isActive ? 'active-pill' : ''}`}
                   onClick={() => navigate(item.path)}
                 >
                   <div className="nav-item-left">
@@ -186,8 +174,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             })}
           </nav>
 
-          {/* Sidebar Footer Info */}
-          <div className="hibank-sidebar-footer">
+          <div className="admin-sidebar-footer">
             <div className="footer-status-item">
               <span className={`status-bulb ${isServerOnline ? 'on' : 'off'}`} />
               <span>MTA Server: {isServerOnline ? 'Online' : 'Offline'}</span>
@@ -199,14 +186,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         </aside>
 
-        {/* ── Main Content Area (Soft Grey Background + Centered White Card) ── */}
-        <main className="hibank-main-content">
-          <div className="hibank-card-container">
+        <main className="admin-main-content">
+          <div className="admin-card-container">
             {children}
           </div>
 
-          {/* Page Footer (Centered Copyright like reference image) */}
-          <footer className="hibank-page-footer">
+          <footer className="admin-page-footer">
             <span>© 2026 OwlGaming MTA Roleplay. All rights reserved.</span>
           </footer>
         </main>

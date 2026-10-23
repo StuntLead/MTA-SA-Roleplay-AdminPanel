@@ -9,6 +9,7 @@ import {
   kickPlayer, 
   fetchServerOverview 
 } from './mtaBridge.js';
+import { getGameLogs } from './logsReader.js';
 
 dotenv.config();
 
@@ -127,6 +128,17 @@ app.get('/api/accounts/:id', async (req, res) => {
       return res.status(404).json({ error: 'Account not found' });
     }
     res.json(account);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Game Logs Endpoint
+app.get('/api/logs', (req, res) => {
+  try {
+    const { file = 'all', search = '', action = 'all', page = 1, limit = 25 } = req.query;
+    const result = getGameLogs({ file, search, action, page, limit });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

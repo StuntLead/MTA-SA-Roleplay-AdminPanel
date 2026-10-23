@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Eye, UserMinus, RefreshCw, Download, Calendar } from 'lucide-react';
+import { Users, Eye, UserMinus, RefreshCw, Download } from 'lucide-react';
 import { IPlayer } from '../../interfaces';
 import { PlayerInspectModal } from './components/PlayerInspectModal';
 import { PlayerKickModal } from './components/PlayerKickModal';
@@ -52,22 +52,10 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({
   };
 
   return (
-    <div className="hibank-page-card">
-      {/* Centered Title (Like Screenshot 1 "Biller Transaction") */}
+    <div className="admin-page-card">
       <h1 className="page-card-title">Online Players</h1>
 
-      {/* Toolbar: Filter Date on Left, Action Buttons on Right (Like Screenshot 2) */}
-      <div className="hibank-toolbar">
-        <div className="toolbar-left">
-          <div>
-            <div className="filter-box-label">Filter Session Date</div>
-            <div className="filter-input-wrap">
-              <Calendar size={14} className="text-muted" />
-              <span>{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-            </div>
-          </div>
-        </div>
-
+      <div className="admin-toolbar" style={{ justifyContent: 'flex-end' }}>
         <div className="toolbar-right">
           <button 
             type="button" 
@@ -91,9 +79,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({
         </div>
       </div>
 
-      {/* Table with Column-Specific Search Inputs (Like Screenshot 1) */}
-      <div className="hibank-table-wrapper">
-        <table className="hibank-table">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
           <thead>
             <tr>
               <th style={{ width: '45px' }}>NO</th>
@@ -173,7 +160,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({
                   <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#10b981' }}>
                     ${(player.cash || 0).toLocaleString()}
                   </td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--hibank-teal-pill)' }}>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--panel-teal-pill)' }}>
                     ${(player.bank || 0).toLocaleString()}
                   </td>
                   <td>
@@ -224,8 +211,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({
         </table>
       </div>
 
-      {/* Pagination Bar (Like Screenshot 1) */}
-      <div className="hibank-pagination-bar">
+      <div className="admin-pagination-bar">
         <div>
           <span>Rows per page:</span>
           <select className="rows-per-page-select" defaultValue="10">
@@ -241,7 +227,6 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({
         </div>
       </div>
 
-      {/* Inspect & Kick Modals */}
       <PlayerInspectModal
         player={inspectPlayer}
         onClose={() => setInspectPlayer(null)}

@@ -20,7 +20,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('mta-admin-theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return 'light'; // Default to clean light mode
+    return 'light';
   });
 
   useEffect(() => {

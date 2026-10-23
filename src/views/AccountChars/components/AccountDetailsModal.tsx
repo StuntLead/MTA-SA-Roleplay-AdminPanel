@@ -25,7 +25,6 @@ export const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ accoun
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Core Account Details */}
         <div className="data-list">
           <div className="data-row">
             <span className="data-key">Account Username</span>
@@ -59,7 +58,6 @@ export const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ accoun
           </div>
         </div>
 
-        {/* Character Roster */}
         <div>
           <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.65rem' }}>
             Associated Characters ({account.characters?.length || 0})
@@ -101,7 +99,7 @@ export const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ accoun
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11px' }}>Bank:</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--hibank-teal-pill)' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--panel-teal-pill)' }}>
                         ${(char.bankmoney || 0).toLocaleString()}
                       </span>
                     </div>

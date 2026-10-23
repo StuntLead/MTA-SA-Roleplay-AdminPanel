@@ -67,7 +67,7 @@ export const PlayerInspectModal: React.FC<PlayerInspectModalProps> = ({ player, 
         </div>
         <div className="data-row">
           <span className="data-key">Bank Balance</span>
-          <span className="data-val font-mono" style={{ color: 'var(--hibank-teal-pill)', fontWeight: 600 }}>
+          <span className="data-val font-mono" style={{ color: 'var(--panel-teal-pill)', fontWeight: 600 }}>
             ${(player.bank || 0).toLocaleString()}
           </span>
         </div>
