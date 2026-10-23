@@ -89,17 +89,3 @@ npm run dev
 Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
 ---
-
-## 📦 Pushing to a Separate GitHub Repository
-
-This `admin-panel` folder is already ignored by the parent `MTA-SA-Roleplay` repository.
-
-To push this admin panel to its own dedicated repository on GitHub:
-
-```bash
-git init -b main
-git add .
-git commit -m "feat: initial commit for MTA:SA web admin panel"
-git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_ADMIN_PANEL_REPO>.git
-git push -u origin main
-```
