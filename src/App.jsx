@@ -1,918 +1,218 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Layers, 
-  UserCheck, 
-  Activity, 
-  RefreshCw, 
-  Search, 
-  Play, 
-  Square, 
-  RotateCcw, 
-  AlertTriangle, 
-  CheckCircle2, 
-  ShieldAlert, 
-  X, 
-  Eye, 
-  UserMinus, 
-  Server, 
-  Database,
-  ExternalLink,
-  ChevronRight
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { MainLayout } from './layouts';
+import { DashboardView } from './views/Dashboard/DashboardView';
+import { OnlinePlayerView } from './views/OnlinePlayer/OnlinePlayerView';
+import { AccountCharsView } from './views/AccountChars/AccountCharsView';
+import { ResourceControlsView } from './views/ResourceControls/ResourceControlsView';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('players');
+let toastIdCounter = 0;
+
+/**
+ * AdminPanel — connects backend APIs and renders views with URL-based routing
+ */
+function AdminPanel() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
-  // Data states
-  const [overview, setOverview] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [resources, setResources] = useState([]);
-  const [accountsData, setAccountsData] = useState({ accounts: [], total: 0, page: 1, totalPages: 1 });
-  
-  // Search and filter states
-  const [playerSearch, setPlayerSearch] = useState('');
-  const [resourceSearch, setResourceSearch] = useState('');
-  const [resourceFilter, setResourceFilter] = useState('all'); // all, running, stopped
-  const [accountSearch, setAccountSearch] = useState('');
-  const [actionLoading, setActionLoading] = useState({}); // resource name -> bool
+  // Live Data State
+  const [overview, setOverview]       = useState(null);
+  const [players, setPlayers]         = useState([]);
+  const [resources, setResources]     = useState([]);
+  const [accountsData, setAccountsData] = useState({
+    accounts: [], total: 0, page: 1, totalPages: 1,
+  });
 
-  // Modals
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [kickModalPlayer, setKickModalPlayer] = useState(null);
-  const [kickReason, setKickReason] = useState('Violation of server rules');
-  const [selectedAccount, setSelectedAccount] = useState(null);
-  const [accountDetailsLoading, setAccountDetailsLoading] = useState(false);
+  /* ── Toasts ──────────────────────────────────────────────── */
+  const showToast = useCallback((message, type = 'success') => {
+    const id = ++toastIdCounter;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
-
-  // Fetch all core data
-  const fetchData = async () => {
+  /* ── Fetch core data from backend ────────────────────────── */
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Overview
-      const resOverview = await fetch('/api/overview').catch(() => null);
-      if (resOverview && resOverview.ok) {
-        const data = await resOverview.json();
-        setOverview(data);
-      }
+      const [resOverview, resPlayers, resResources, resAccounts] = await Promise.all([
+        fetch('/api/overview').catch(() => null),
+        fetch('/api/players').catch(() => null),
+        fetch('/api/resources').catch(() => null),
+        fetch('/api/accounts?page=1&limit=20').catch(() => null),
+      ]);
 
-      // Players
-      const resPlayers = await fetch('/api/players').catch(() => null);
-      if (resPlayers && resPlayers.ok) {
-        const data = await resPlayers.json();
-        setPlayers(data.players || []);
-      }
-
-      // Resources
-      const resResources = await fetch('/api/resources').catch(() => null);
-      if (resResources && resResources.ok) {
-        const data = await resResources.json();
-        setResources(data.resources || []);
-      }
-
-      // Accounts
-      const resAccounts = await fetch(`/api/accounts?search=${encodeURIComponent(accountSearch)}&page=1&limit=15`).catch(() => null);
-      if (resAccounts && resAccounts.ok) {
-        const data = await resAccounts.json();
-        setAccountsData(data);
-      }
+      if (resOverview?.ok)  { const d = await resOverview.json();  setOverview(d); }
+      if (resPlayers?.ok)   { const d = await resPlayers.json();   setPlayers(d.players || []); }
+      if (resResources?.ok) { const d = await resResources.json(); setResources(d.resources || []); }
+      if (resAccounts?.ok)  { const d = await resAccounts.json();  setAccountsData(d); }
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-    // Poll every 8 seconds
-    const interval = setInterval(fetchData, 8000);
-    return () => clearInterval(interval);
-  }, []);
+    const id = setInterval(fetchData, 10_000);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
-  // Handle accounts search change
+  /* ── Account search ──────────────────────────────────────── */
   const handleAccountSearch = async (query) => {
-    setAccountSearch(query);
     try {
-      const res = await fetch(`/api/accounts?search=${encodeURIComponent(query)}&page=1&limit=15`);
-      if (res.ok) {
-        const data = await res.json();
-        setAccountsData(data);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      const res = await fetch(`/api/accounts?search=${encodeURIComponent(query)}&page=1&limit=20`);
+      if (res.ok) setAccountsData(await res.json());
+    } catch (err) { console.error(err); }
   };
 
-  // View Account Details
-  const handleViewAccount = async (accId) => {
-    setAccountDetailsLoading(true);
-    try {
-      const res = await fetch(`/api/accounts/${accId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedAccount(data);
-      }
-    } catch (err) {
-      showToast('Could not load account details', 'danger');
-    } finally {
-      setAccountDetailsLoading(false);
-    }
+  /* ── View account details ────────────────────────────────── */
+  const handleViewAccount = async (id) => {
+    const res = await fetch(`/api/accounts/${id}`);
+    if (!res.ok) throw new Error('Failed to load account');
+    return res.json();
   };
 
-  // Resource Action
+  /* ── Resource actions (start / stop / restart) ───────────── */
   const handleResourceAction = async (name, action) => {
-    setActionLoading(prev => ({ ...prev, [name]: true }));
     try {
       const res = await fetch('/api/resources/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, action })
+        body: JSON.stringify({ name, action }),
       });
       const data = await res.json();
       if (data.success) {
-        showToast(data.message || `Resource ${name} ${action}ed`);
-        // update local list
-        setResources(prev => prev.map(r => {
-          if (r.name === name) {
-            return {
-              ...r,
-              state: action === 'stop' ? 'loaded' : 'running'
-            };
-          }
-          return r;
-        }));
+        showToast(data.message || `${name} ${action}ed successfully`);
+        setResources((prev) =>
+          prev.map((r) =>
+            r.name === name ? { ...r, state: action === 'stop' ? 'loaded' : 'running' } : r
+          )
+        );
       } else {
         showToast(data.message || 'Action failed', 'danger');
       }
     } catch (err) {
-      showToast(err.message, 'danger');
-    } finally {
-      setActionLoading(prev => ({ ...prev, [name]: false }));
+      showToast(err.message || 'Action failed', 'danger');
     }
   };
 
-  // Kick Player Action
-  const handleKickSubmit = async (e) => {
-    e.preventDefault();
-    if (!kickModalPlayer) return;
-    try {
-      const res = await fetch('/api/players/kick', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: kickModalPlayer.id, reason: kickReason })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || `Player kicked successfully`);
-        setPlayers(prev => prev.filter(p => p.id !== kickModalPlayer.id));
-        setKickModalPlayer(null);
-      } else {
-        showToast(data.message || 'Failed to kick player', 'danger');
-      }
-    } catch (err) {
-      showToast(err.message, 'danger');
+  /* ── Kick player ─────────────────────────────────────────── */
+  const handleKickPlayer = async (id, reason) => {
+    const res = await fetch('/api/players/kick', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, reason }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Player kicked successfully');
+      setPlayers((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      showToast(data.message || 'Kick failed', 'danger');
+      throw new Error(data.message);
     }
   };
-
-  // Safe filtering calculations
-  const safePlayers = Array.isArray(players) ? players : [];
-  const safeResources = Array.isArray(resources) ? resources : [];
-
-  const filteredPlayers = safePlayers.filter(p => {
-    if (!p || typeof p !== 'object') return false;
-    const charName = String(p.character_name || '');
-    const accName = String(p.account_name || '');
-    const q = playerSearch.toLowerCase();
-    return charName.toLowerCase().includes(q) || accName.toLowerCase().includes(q);
-  });
-
-  const filteredResources = safeResources.filter(r => {
-    if (!r || typeof r !== 'object') return false;
-    const name = String(r.name || '');
-    const desc = String(r.description || '');
-    const q = resourceSearch.toLowerCase();
-    const matchesSearch = name.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
-    if (!matchesSearch) return false;
-    if (resourceFilter === 'running') return r.state === 'running';
-    if (resourceFilter === 'stopped') return r.state !== 'running';
-    return true;
-  });
-
-  const runningCount = safeResources.filter(r => r?.state === 'running').length;
-  const stoppedCount = safeResources.length - runningCount;
-
 
   return (
-    <div className="app-container">
-      {/* Toast Notification */}
-      {toast && (
+    <>
+      <MainLayout
+        onRefresh={fetchData}
+        loading={loading}
+        playerCount={players.length}
+        resourceCount={resources.length}
+        accountCount={accountsData.total || accountsData.accounts.length}
+        isServerOnline={!!overview && !overview.isMock}
+        isDbOnline={!!overview?.db_connected}
+      >
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardView
+                overview={overview}
+                onNavigate={(routeId) => {
+                  const pathMap = {
+                    'online-players': '/players',
+                    'account-chars': '/accounts',
+                    'resource-controls': '/resources',
+                    'dashboard': '/dashboard',
+                  };
+                  navigate(pathMap[routeId] || `/${routeId}`);
+                }}
+                onRefresh={fetchData}
+                loading={loading}
+              />
+            }
+          />
+          <Route
+            path="/players"
+            element={
+              <OnlinePlayerView
+                players={players}
+                onKickPlayer={handleKickPlayer}
+                onRefresh={fetchData}
+                loading={loading}
+              />
+            }
+          />
+          <Route
+            path="/accounts"
+            element={
+              <AccountCharsView
+                accounts={accountsData.accounts}
+                totalAccounts={accountsData.total}
+                onSearch={handleAccountSearch}
+                onViewAccount={handleViewAccount}
+                onRefresh={fetchData}
+                loading={loading}
+              />
+            }
+          />
+          <Route
+            path="/resources"
+            element={
+              <ResourceControlsView
+                resources={resources}
+                onAction={handleResourceAction}
+                onRefresh={fetchData}
+                loading={loading}
+              />
+            }
+          />
+          <Route path="/resource-controls" element={<Navigate to="/resources" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </MainLayout>
+
+      {/* Toasts */}
+      {toasts.length > 0 && (
         <div className="toast-container">
-          <div className="toast">
-            {toast.type === 'danger' ? (
-              <AlertTriangle size={18} color="var(--danger)" />
-            ) : (
-              <CheckCircle2 size={18} color="var(--success)" />
-            )}
-            <span>{toast.message}</span>
-          </div>
+          {toasts.map((toast) => (
+            <div key={toast.id} className={`toast toast-${toast.type}`}>
+              {toast.type === 'danger'
+                ? <AlertTriangle size={16} color="#ef4444" />
+                : <CheckCircle2 size={16} color="#10b981" />
+              }
+              <span>{toast.message}</span>
+            </div>
+          ))}
         </div>
       )}
+    </>
+  );
+}
 
-      {/* Sidebar Navigation */}
-      <aside className="sidebar">
-        <div className="brand-section">
-          <div className="brand-icon">
-            <Server size={22} color="#fff" />
-          </div>
-          <div className="brand-text">
-            <h1>MTA:SA Admin</h1>
-            <span>Roleplay Management</span>
-          </div>
-        </div>
-
-        <nav className="nav-menu">
-          <button 
-            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <Activity size={18} />
-            <span>Overview</span>
-          </button>
-
-          <button 
-            className={`nav-item ${activeTab === 'players' ? 'active' : ''}`}
-            onClick={() => setActiveTab('players')}
-          >
-            <Users size={18} />
-            <span>Online Players</span>
-            <span className="nav-badge">{players.length}</span>
-          </button>
-
-          <button 
-            className={`nav-item ${activeTab === 'accounts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('accounts')}
-          >
-            <UserCheck size={18} />
-            <span>Accounts & Chars</span>
-            <span className="nav-badge">{accountsData.total || accountsData.accounts.length}</span>
-          </button>
-
-          <button 
-            className={`nav-item ${activeTab === 'resources' ? 'active' : ''}`}
-            onClick={() => setActiveTab('resources')}
-          >
-            <Layers size={18} />
-            <span>Resource Control</span>
-            <span className="nav-badge">{resources.length}</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="status-pill">
-            <div className={`status-indicator ${overview ? 'online' : 'offline'}`} />
-            <span>MTA Server: {overview?.isMock ? 'Demo / Offline' : 'Live Connected'}</span>
-          </div>
-          <div className="status-pill">
-            <div className={`status-indicator ${overview?.db_connected ? 'online' : 'offline'}`} />
-            <span>MySQL DB: {overview?.db_connected ? 'Connected' : 'Demo Mode'}</span>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="main-content">
-        {/* Top Header */}
-        <div className="top-header">
-          <div className="page-title">
-            <h2>
-              {activeTab === 'overview' && 'Server Overview & Telemetry'}
-              {activeTab === 'players' && 'Active Players In-Game'}
-              {activeTab === 'accounts' && 'Player Accounts & Character Directory'}
-              {activeTab === 'resources' && 'MTA Server Resource Management'}
-            </h2>
-            <p>
-              {activeTab === 'overview' && 'Realtime health monitoring and game server status'}
-              {activeTab === 'players' && 'Inspect players, check health/ping, and moderate in-game sessions'}
-              {activeTab === 'accounts' && 'Database records, user permissions, and associated character profiles'}
-              {activeTab === 'resources' && 'Monitor and execute start, stop, or restart operations on resources'}
-            </p>
-          </div>
-
-          <div className="header-actions">
-            <button 
-              className="btn btn-secondary" 
-              onClick={fetchData} 
-              disabled={loading}
-              title="Refresh All Data"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              <span>Refresh</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Global Statistics Cards */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-              <Users size={24} />
-            </div>
-            <div className="stat-info">
-              <p>Players Online</p>
-              <h3>{players.length} <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>/ {overview?.max_players || 128}</span></h3>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1' }}>
-              <Layers size={24} />
-            </div>
-            <div className="stat-info">
-              <p>Active Resources</p>
-              <h3>{runningCount} <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>/ {resources.length}</span></h3>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-              <UserCheck size={24} />
-            </div>
-            <div className="stat-info">
-              <p>Registered Accounts</p>
-              <h3>{accountsData.total || accountsData.accounts.length}</h3>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a855f7' }}>
-              <Server size={24} />
-            </div>
-            <div className="stat-info">
-              <p>MTA Version</p>
-              <h3 style={{ fontSize: '1.25rem' }}>{overview?.mta_version || '1.5.9'}</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* TAB 1: OVERVIEW */}
-        {activeTab === 'overview' && (
-          <div>
-            <div className="panel-card">
-              <div className="panel-header">
-                <h3><Server size={18} /> Server Information</h3>
-              </div>
-              <div className="modal-body">
-                <div className="detail-row">
-                  <span className="detail-label">Server Host Name</span>
-                  <span className="detail-val">{overview?.server_name || 'OwlGaming MTA:SA Roleplay'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Server Port</span>
-                  <span className="detail-val">{overview?.server_port || 22003}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">FPS Limit</span>
-                  <span className="detail-val">{overview?.fps_limit || 60} FPS</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Server Uptime</span>
-                  <span className="detail-val">{overview ? `${Math.floor(overview.uptime / 60)} minutes` : 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">MTA HTTP API Bridge Status</span>
-                  <span className="detail-val">
-                    <span className="badge badge-success">Exported HTTP API Ready</span>
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">MySQL Connection Status</span>
-                  <span className="detail-val">
-                    {overview?.db_connected ? (
-                      <span className="badge badge-success">Online & Connected</span>
-                    ) : (
-                      <span className="badge badge-warning">Simulated Mock (Check .env)</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="panel-card">
-              <div className="panel-header">
-                <h3><Activity size={18} /> Quick Operations</h3>
-              </div>
-              <div style={{ padding: '20px', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                <button className="btn btn-primary" onClick={() => setActiveTab('players')}>
-                  <Users size={16} /> View Online Players ({players.length})
-                </button>
-                <button className="btn btn-secondary" onClick={() => setActiveTab('resources')}>
-                  <Layers size={16} /> Manage Resources ({resources.length})
-                </button>
-                <button className="btn btn-secondary" onClick={() => setActiveTab('accounts')}>
-                  <UserCheck size={16} /> Search User Accounts
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: LIVE PLAYERS */}
-        {activeTab === 'players' && (
-          <div className="panel-card">
-            <div className="panel-header">
-              <h3><Users size={18} /> Online Players ({filteredPlayers.length})</h3>
-              
-              <div className="search-input-wrapper">
-                <Search size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Filter character or account..." 
-                  className="search-input"
-                  value={playerSearch}
-                  onChange={(e) => setPlayerSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Character Name</th>
-                    <th>Account Name</th>
-                    <th>Ping</th>
-                    <th>Health / Armor</th>
-                    <th>Admin Rank</th>
-                    <th>Location</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPlayers.length === 0 ? (
-                    <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
-                        No players currently connected.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPlayers.map((player) => (
-                      <tr key={player.id}>
-                        <td><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>#{player.id}</span></td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#fff' }}>{player.character_name}</div>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>DB ID: {player.character_id}</span>
-                        </td>
-                        <td>
-                          <span className="badge badge-neutral">{player.account_name}</span>
-                        </td>
-                        <td>
-                          <span style={{ 
-                            fontFamily: 'var(--font-mono)', 
-                            color: player.ping < 60 ? 'var(--success)' : player.ping < 120 ? 'var(--warning)' : 'var(--danger)' 
-                          }}>
-                            {player.ping} ms
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div className="stat-bar-container">
-                              <div className="stat-bar">
-                                <div className="stat-bar-fill health" style={{ width: `${Math.min(player.health, 100)}%` }} />
-                              </div>
-                              <span className="stat-bar-label">{player.health}%</span>
-                            </div>
-                            <div className="stat-bar-container">
-                              <div className="stat-bar">
-                                <div className="stat-bar-fill armor" style={{ width: `${Math.min(player.armor, 100)}%` }} />
-                              </div>
-                              <span className="stat-bar-label">{player.armor}%</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          {player.admin_level > 0 ? (
-                            <span className="badge badge-admin">Admin Rank {player.admin_level}</span>
-                          ) : (
-                            <span className="badge badge-neutral">Player</span>
-                          )}
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{player.location}</span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                            <button 
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => setSelectedPlayer(player)}
-                              title="Inspect Details"
-                            >
-                              <Eye size={14} /> Details
-                            </button>
-                            <button 
-                              className="btn btn-danger btn-sm"
-                              onClick={() => {
-                                setKickModalPlayer(player);
-                                setKickReason('Violation of server rules');
-                              }}
-                              title="Kick Player"
-                            >
-                              <UserMinus size={14} /> Kick
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: ACCOUNTS & CHARACTERS */}
-        {activeTab === 'accounts' && (
-          <div className="panel-card">
-            <div className="panel-header">
-              <h3><UserCheck size={18} /> Registered User Accounts</h3>
-
-              <div className="search-input-wrapper">
-                <Search size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search username or email..." 
-                  className="search-input"
-                  value={accountSearch}
-                  onChange={(e) => handleAccountSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Account ID</th>
-                    <th>Username</th>
-                    <th>Email Address</th>
-                    <th>Rank</th>
-                    <th>Registered Date</th>
-                    <th>Last Active</th>
-                    <th>Characters</th>
-                    <th style={{ textAlign: 'right' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {accountsData.accounts.length === 0 ? (
-                    <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
-                        No accounts found.
-                      </td>
-                    </tr>
-                  ) : (
-                    accountsData.accounts.map((acc) => (
-                      <tr key={acc.id}>
-                        <td><span style={{ fontFamily: 'var(--font-mono)' }}>#{acc.id}</span></td>
-                        <td><span style={{ fontWeight: 600, color: '#fff' }}>{acc.username}</span></td>
-                        <td><span style={{ color: 'var(--text-muted)' }}>{acc.email || 'None'}</span></td>
-                        <td>
-                          {Number(acc.admin) > 0 ? (
-                            <span className="badge badge-admin">Level {acc.admin}</span>
-                          ) : (
-                            <span className="badge badge-neutral">User</span>
-                          )}
-                        </td>
-                        <td><span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{acc.registerdate || 'N/A'}</span></td>
-                        <td><span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{acc.lastlogin || 'N/A'}</span></td>
-                        <td>
-                          <span className="badge badge-neutral">{acc.characters_count || acc.characters?.length || 0} Chars</span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleViewAccount(acc.id)}
-                          >
-                            <Eye size={14} /> View Roster
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: RESOURCE CONTROL */}
-        {activeTab === 'resources' && (
-          <div className="panel-card">
-            <div className="panel-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <h3><Layers size={18} /> Server Resources ({filteredResources.length})</h3>
-                
-                <div className="filter-tabs">
-                  <button 
-                    className={`filter-tab ${resourceFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setResourceFilter('all')}
-                  >
-                    All ({resources.length})
-                  </button>
-                  <button 
-                    className={`filter-tab ${resourceFilter === 'running' ? 'active' : ''}`}
-                    onClick={() => setResourceFilter('running')}
-                  >
-                    Running ({runningCount})
-                  </button>
-                  <button 
-                    className={`filter-tab ${resourceFilter === 'stopped' ? 'active' : ''}`}
-                    onClick={() => setResourceFilter('stopped')}
-                  >
-                    Stopped ({stoppedCount})
-                  </button>
-                </div>
-              </div>
-
-              <div className="search-input-wrapper">
-                <Search size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search resources..." 
-                  className="search-input"
-                  value={resourceSearch}
-                  onChange={(e) => setResourceSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Resource Name</th>
-                    <th>Type</th>
-                    <th>State</th>
-                    <th>Author</th>
-                    <th>Version</th>
-                    <th style={{ textAlign: 'right' }}>Controls</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredResources.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
-                        No resources matching your criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredResources.map((res) => {
-                      const isRunning = res.state === 'running';
-                      const isLoading = actionLoading[res.name];
-
-                      return (
-                        <tr key={res.name}>
-                          <td>
-                            <div style={{ fontWeight: 600, color: '#fff', fontFamily: 'var(--font-mono)' }}>
-                              {res.name}
-                            </div>
-                            {res.description && (
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {res.description}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <span className="badge badge-neutral">{res.type}</span>
-                          </td>
-                          <td>
-                            {isRunning ? (
-                              <span className="badge badge-success">Running</span>
-                            ) : (
-                              <span className="badge badge-warning">{res.state}</span>
-                            )}
-                          </td>
-                          <td><span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{res.author || 'Community'}</span></td>
-                          <td><span style={{ fontSize: '0.82rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>{res.version || '1.0.0'}</span></td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                              {!isRunning ? (
-                                <button 
-                                  className="btn btn-success btn-sm"
-                                  onClick={() => handleResourceAction(res.name, 'start')}
-                                  disabled={isLoading}
-                                  title="Start Resource"
-                                >
-                                  <Play size={13} /> Start
-                                </button>
-                              ) : (
-                                <>
-                                  <button 
-                                    className="btn btn-secondary btn-sm"
-                                    onClick={() => handleResourceAction(res.name, 'restart')}
-                                    disabled={isLoading}
-                                    title="Restart Resource"
-                                  >
-                                    <RotateCcw size={13} /> Restart
-                                  </button>
-                                  <button 
-                                    className="btn btn-danger btn-sm"
-                                    onClick={() => handleResourceAction(res.name, 'stop')}
-                                    disabled={isLoading}
-                                    title="Stop Resource"
-                                  >
-                                    <Square size={13} /> Stop
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* MODAL 1: PLAYER DETAILS */}
-      {selectedPlayer && (
-        <div className="modal-backdrop" onClick={() => setSelectedPlayer(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Player Details: {selectedPlayer.character_name}</h3>
-              <button className="modal-close" onClick={() => setSelectedPlayer(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="detail-row">
-                <span className="detail-label">Character Name</span>
-                <span className="detail-val">{selectedPlayer.character_name}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Account Username</span>
-                <span className="detail-val">{selectedPlayer.account_name} (#{selectedPlayer.account_id})</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">In-Game Server ID</span>
-                <span className="detail-val">#{selectedPlayer.id}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">IP Address</span>
-                <span className="detail-val">{selectedPlayer.ip}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Ping</span>
-                <span className="detail-val">{selectedPlayer.ping} ms</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Health & Armor</span>
-                <span className="detail-val">{selectedPlayer.health}% HP | {selectedPlayer.armor}% Armor</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Cash on Hand</span>
-                <span className="detail-val" style={{ color: 'var(--success)' }}>${(selectedPlayer.cash || 0).toLocaleString()}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Bank Balance</span>
-                <span className="detail-val" style={{ color: '#60a5fa' }}>${(selectedPlayer.bank || 0).toLocaleString()}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Hours Played</span>
-                <span className="detail-val">{selectedPlayer.hours_played} hours</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Current Zone</span>
-                <span className="detail-val">{selectedPlayer.location}</span>
-              </div>
-              {selectedPlayer.coordinates && (
-                <div className="detail-row">
-                  <span className="detail-label">Coordinates (X, Y, Z)</span>
-                  <span className="detail-val">{selectedPlayer.coordinates.x}, {selectedPlayer.coordinates.y}, {selectedPlayer.coordinates.z}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: KICK PLAYER */}
-      {kickModalPlayer && (
-        <div className="modal-backdrop" onClick={() => setKickModalPlayer(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger)' }}>
-                <ShieldAlert size={20} /> Kick {kickModalPlayer.character_name}
-              </h3>
-              <button className="modal-close" onClick={() => setKickModalPlayer(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleKickSubmit}>
-              <div className="modal-body">
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '14px' }}>
-                  Are you sure you want to disconnect this player from the server? Please specify an administrative reason:
-                </p>
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  style={{ width: '100%', padding: '10px 14px' }}
-                  value={kickReason}
-                  onChange={(e) => setKickReason(e.target.value)}
-                  placeholder="Enter kick reason..."
-                  required
-                />
-              </div>
-              <div style={{ padding: '16px 24px', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setKickModalPlayer(null)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-danger">
-                  Confirm Kick
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: ACCOUNT & CHARACTER ROSTER */}
-      {selectedAccount && (
-        <div className="modal-backdrop" onClick={() => setSelectedAccount(null)}>
-          <div className="modal-content" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Account: {selectedAccount.username} (#{selectedAccount.id})</h3>
-              <button className="modal-close" onClick={() => setSelectedAccount(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              <div className="detail-row">
-                <span className="detail-label">Email</span>
-                <span className="detail-val">{selectedAccount.email || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Admin Level</span>
-                <span className="detail-val">
-                  {selectedAccount.admin > 0 ? `Level ${selectedAccount.admin}` : 'Standard Player'}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Registration Date</span>
-                <span className="detail-val">{selectedAccount.registerdate || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Last Login</span>
-                <span className="detail-val">{selectedAccount.lastlogin || 'N/A'}</span>
-              </div>
-
-              <h4 style={{ marginTop: '20px', marginBottom: '8px', fontSize: '1rem', color: '#fff' }}>
-                Associated Characters ({selectedAccount.characters?.length || 0})
-              </h4>
-
-              {(!selectedAccount.characters || selectedAccount.characters.length === 0) ? (
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem' }}>No characters found for this account.</p>
-              ) : (
-                selectedAccount.characters.map((char) => (
-                  <div key={char.id} className="character-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.98rem' }}>
-                        {char.charactername.replace('_', ' ')}
-                      </span>
-                      <span className="badge badge-neutral">ID #{char.id}</span>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '10px', fontSize: '0.82rem' }}>
-                      <div>
-                        <span style={{ color: 'var(--text-dim)' }}>Hours Played:</span>
-                        <div style={{ fontWeight: 600 }}>{char.hoursplayed || 0} hrs</div>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-dim)' }}>Cash:</span>
-                        <div style={{ fontWeight: 600, color: 'var(--success)' }}>${(char.money || 0).toLocaleString()}</div>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-dim)' }}>Bank:</span>
-                        <div style={{ fontWeight: 600, color: '#60a5fa' }}>${(char.bankmoney || 0).toLocaleString()}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+/** Wrap with ThemeProvider */
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AdminPanel />
+    </ThemeProvider>
   );
 }
